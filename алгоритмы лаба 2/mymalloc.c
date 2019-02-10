@@ -8,7 +8,7 @@ char flagInitialization = 0;
 
 static void ArrayInitialization(void) {
 	freeSpaceList->size = SIZE;
-	freeSpaceList->next = SIZE - SIZE_DESC; // изначально список сводобного пространства ссылается сам на себя
+	freeSpaceList->next = SIZE - SIZE_DESC; // initially the list of free space refers to itself
 	flagInitialization = 1;
 }
 
@@ -36,13 +36,13 @@ static void* MemorySplit(struct descriptor *q, struct descriptor *p, int size) {
 	struct descriptor *new = (struct descriptor*)((char*)q - size);
 	new->size = (q->size) - size;
 	if (&memory[q->next] == (char*)q) {
-		new->next = q->next - size; // если q ссылался сам на себя, то и new тоже
+		new->next = q->next - size; //if q refers to itself, then new too
 	}
 	else {
 		new->next = q->next;
 		p->next = q->next - size;
 	}
-	q->size = -size; // q - занят
+	q->size = -size; // q - busy
 	freeSpaceList = new;
 	q = (void*)((char*)q - size + SIZE_DESC);
 	return q;
@@ -50,17 +50,17 @@ static void* MemorySplit(struct descriptor *q, struct descriptor *p, int size) {
 
 
 void* MyMalloc(int size) {
-	if (!flagInitialization)  // если используем первый раз, то происходит инициализация. В последующие разы не выполняется
+	if (!flagInitialization)  // if used for the first time, initialization occurs. Subsequent times not performed
 		ArrayInitialization();
 	struct descriptor *p = freeSpaceList;
-	struct descriptor *q = (struct descriptor *)&memory[freeSpaceList->next];//(struct descriptor *)&memory[p->next];
-	size += SIZE_DESC; // нужен размер больше на размер дескриптора
-	while ((size < q->size) && (q != freeSpaceList) && (q->next >= 0)) { // если  размер не подходит И не вернулись к началу
+	struct descriptor *q = (struct descriptor *)&memory[freeSpaceList->next];
+	size += SIZE_DESC; // need size bigger by descriptor size
+	while ((size < q->size) && (q != freeSpaceList) && (q->next >= 0)) { // if the size does not fit And did not return to the beginning
 		p = q;
 		q = (struct descriptor *)&memory[q->next];
 	}
 	if (q->size == size) {
-		p->next = q->next; // исключаем из списка свободного пространства
+		p->next = q->next; // exclude from the list of free space
 		q->size *= -1;
 		freeSpaceList = (struct descriptor *)&memory[q->next];
 		q = (void*)((char*)q - size + SIZE_DESC);
